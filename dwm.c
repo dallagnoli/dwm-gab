@@ -1059,7 +1059,7 @@ drawbar(Monitor *m)
 	if (!m->showbar)
 		return;
 
-	if(showsystray && m == systraytomon(m) && !systrayonleft)
+	if (showsystray && m == systraytomon(m) && !systrayonleft)
 		stw = getsystraywidth();
 
 	/* draw status first so it can be overdrawn by tags later */
@@ -1076,23 +1076,31 @@ drawbar(Monitor *m)
 	x = 0;
 	for (i = 0; i < LENGTH(tags); i++) {
 		/* Do not draw vacant tags */
-		if(!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
+		if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
 			continue;
 		w = TEXTW(tags[i]);
 		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
 		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i);
 		x += w;
 	}
+
 	if (m->ltsymbol[0] != '\0') {
-    	w = TEXTW(m->ltsymbol);
-    	drw_setscheme(drw, scheme[SchemeNorm]);
-    	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
-    }
+		w = TEXTW(m->ltsymbol);
+		drw_setscheme(drw, scheme[SchemeNorm]);
+		x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
+	}
 
 	if ((w = m->ww - tw - stw - x) > bh) {
 		if (m->sel) {
+			/* separator | in SchemeNorm */
+			int sepw = drw_fontset_getwidth(drw, "|"); /* natural width, no lrpad */
+			drw_setscheme(drw, scheme[SchemeNorm]);
+			drw_text(drw, x, 0, sepw, bh, 0, "|", 0);
+			x += sepw;
+
+			/* window title */
 			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
-			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
+			drw_text(drw, x, 0, w - sepw, bh, lrpad / 2, m->sel->name, 0);
 		} else {
 			drw_setscheme(drw, scheme[SchemeNorm]);
 			drw_rect(drw, x, 0, w, bh, 1, 1);
