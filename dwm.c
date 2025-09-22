@@ -996,7 +996,7 @@ drawstatusbar(Monitor *m, int bh, char* stext) {
 
 			text[i] = '\0';
 			w = TEXTW(text) - lrpad;
-			drw_text(drw, x, 0, w, bh, 0, text, 0);
+			drw_text(drw, x, (bh - drw->fonts->h) / 2, w, drw->fonts->h, 0, text, 0);
 
 			x += w;
 
@@ -1040,7 +1040,7 @@ drawstatusbar(Monitor *m, int bh, char* stext) {
 
 	if (!isCode) {
 		w = TEXTW(text) - lrpad;
-		drw_text(drw, x, 0, w, bh, 0, text, 0);
+		drw_text(drw, x, (bh - drw->fonts->h) / 2, w, drw->fonts->h, 0, text, 0);
 	}
 
 	drw_setscheme(drw, scheme[SchemeNorm]);
@@ -1052,61 +1052,66 @@ drawstatusbar(Monitor *m, int bh, char* stext) {
 void
 drawbar(Monitor *m)
 {
-	int x, w, tw = 0, stw = 0;
-	unsigned int i, occ = 0, urg = 0;
-	Client *c;
+    int x, w, tw = 0, stw = 0;
+    unsigned int i, occ = 0, urg = 0;
+    Client *c;
 
-	if (!m->showbar)
-		return;
+    if (!m->showbar)
+        return;
 
-	if (showsystray && m == systraytomon(m) && !systrayonleft)
-		stw = getsystraywidth();
+    if (showsystray && m == systraytomon(m) && !systrayonleft)
+        stw = getsystraywidth();
 
-	/* draw status first so it can be overdrawn by tags later */
-	if (m == selmon) { /* status is only drawn on selected monitor */
-		tw = m->ww - drawstatusbar(m, bh, stext);
-	}
+    resizebarwin(m);
 
-	resizebarwin(m);
-	for (c = m->clients; c; c = c->next) {
-		occ |= c->tags == TAGMASK ? 0 : c->tags;
-		if (c->isurgent)
-			urg |= c->tags;
-	}
-	x = 0;
-	for (i = 0; i < LENGTH(tags); i++) {
-		/* Do not draw vacant tags */
-		if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
-			continue;
-		w = TEXTW(tags[i]);
-		drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
-		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i);
-		x += w;
-	}
+    // Draw the background for the entire bar FIRST
+    drw_setscheme(drw, scheme[SchemeNorm]);
+    drw_rect(drw, 0, 0, m->ww, bh, 1, 1);
 
-	if (m->ltsymbol[0] != '\0') {
-		w = TEXTW(m->ltsymbol);
-		drw_setscheme(drw, scheme[SchemeNorm]);
-		x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
-	}
+    /* draw status first so it can be overdrawn by tags later */
+    if (m == selmon) { /* status is only drawn on selected monitor */
+        tw = m->ww - drawstatusbar(m, bh, stext);
+    }
 
-	if ((w = m->ww - tw - stw - x) > bh) {
-		if (m->sel) {
-			/* separator | in SchemeNorm */
-			int sepw = drw_fontset_getwidth(drw, "|"); /* natural width, no lrpad */
-			drw_setscheme(drw, scheme[SchemeNorm]);
-			drw_text(drw, x, 0, sepw, bh, 0, "|", 0);
-			x += sepw;
+    for (c = m->clients; c; c = c->next) {
+        occ |= c->tags == TAGMASK ? 0 : c->tags;
+        if (c->isurgent)
+            urg |= c->tags;
+    }
+    x = 0;
+    for (i = 0; i < LENGTH(tags); i++) {
+        /* Do not draw vacant tags */
+        if (!(occ & 1 << i || m->tagset[m->seltags] & 1 << i))
+            continue;
+        w = TEXTW(tags[i]);
+        drw_setscheme(drw, scheme[m->tagset[m->seltags] & 1 << i ? SchemeSel : SchemeNorm]);
+        drw_text(drw, x, (bh - drw->fonts->h) / 2, w, drw->fonts->h, lrpad / 2, tags[i], urg & 1 << i);
+        x += w;
+    }
 
-			/* window title */
-			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
-			drw_text(drw, x, 0, w - sepw, bh, lrpad / 2, m->sel->name, 0);
-		} else {
-			drw_setscheme(drw, scheme[SchemeNorm]);
-			drw_rect(drw, x, 0, w, bh, 1, 1);
-		}
-	}
-	drw_map(drw, m->barwin, 0, 0, m->ww - stw, bh);
+    if (m->ltsymbol[0] != '\0') {
+        w = TEXTW(m->ltsymbol);
+        drw_setscheme(drw, scheme[SchemeNorm]);
+        x = drw_text(drw, x, (bh - drw->fonts->h) / 2, w, drw->fonts->h, lrpad / 2, m->ltsymbol, 0);
+    }
+
+    if ((w = m->ww - tw - stw - x) > bh) {
+        if (m->sel) {
+            /* separator | in SchemeNorm */
+            int sepw = drw_fontset_getwidth(drw, "|"); /* natural width, no lrpad */
+            drw_setscheme(drw, scheme[SchemeNorm]);
+            drw_text(drw, x, (bh - drw->fonts->h) / 2, sepw, drw->fonts->h, 0, "|", 0);
+            x += sepw;
+
+            /* window title */
+            drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
+            drw_text(drw, x, (bh - drw->fonts->h) / 2, w - sepw, drw->fonts->h, lrpad / 2, m->sel->name, 0);
+        } else {
+            drw_setscheme(drw, scheme[SchemeNorm]);
+            drw_rect(drw, x, (bh - drw->fonts->h) / 2, w, drw->fonts->h, 1, 1);
+        }
+    }
+    drw_map(drw, m->barwin, 0, 0, m->ww - stw, bh);
 }
 
 void
@@ -1916,7 +1921,7 @@ resizemouse(const Arg *arg)
 		return;
 	if (c->isfullscreen) /* no support resizing fullscreen windows by mouse */
 		return;
-	restack(selmon);
+ 	restack(selmon);
 	ocx = c->x;
 	ocy = c->y;
 	och = c->h;
@@ -2192,13 +2197,13 @@ setmfact(const Arg *arg)
 void
 setup(void)
 {
-	int i;
-	XSetWindowAttributes wa;
-	Atom utf8string;
-	struct sigaction sa;
-	pid_t pid;
+    int i;
+    XSetWindowAttributes wa;
+    Atom utf8string;
+    struct sigaction sa;
+    pid_t pid;
 
-	/* do not transform children into zombies when they terminate */
+    /* do not transform children into zombies when they terminate */
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT | SA_RESTART;
 	sa.sa_handler = SIG_IGN;
@@ -2227,11 +2232,11 @@ setup(void)
 	sh = DisplayHeight(dpy, screen);
 	root = RootWindow(dpy, screen);
 	drw = drw_create(dpy, screen, root, sw, sh);
-	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
-		die("no fonts could be loaded.");
-	lrpad = drw->fonts->h;
-	bh = drw->fonts->h + 2;
-	updategeom();
+    if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
+        die("no fonts could be loaded.");
+    lrpad = drw->fonts->h;
+    bh = drw->fonts->h + 20; // 20px extra, so bar is font+20px tall
+    updategeom();
 	/* init atoms */
 	utf8string = XInternAtom(dpy, "UTF8_STRING", False);
 	wmatom[WMProtocols] = XInternAtom(dpy, "WM_PROTOCOLS", False);
@@ -2829,7 +2834,7 @@ updatesystray(void)
 	unsigned int x = m->mx + m->mw;
 	unsigned int sw = TEXTW(stext) - lrpad + systrayspacing;
 	unsigned int w = 1;
-	unsigned int y = ((bh - 16) / 2);
+	unsigned int y = ((bh - 16) / 2); // Center 16px icons in 20px bar
 
 	if (!showsystray)
 		return;
