@@ -226,7 +226,6 @@ static void movemouse(const Arg *arg);
 static void moveorplace(const Arg *arg);
 static Client *nexttiled(Client *c);
 static void placemouse(const Arg *arg);
-static void pop(Client *c);
 static void propertynotify(XEvent *e);
 static void quit(const Arg *arg);
 static Client *recttoclient(int x, int y, int w, int h);
@@ -285,7 +284,6 @@ static Client *wintosystrayicon(Window w);
 static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
-static void zoom(const Arg *arg);
 static void autostart_exec(void);
 
 static pid_t getparentprocess(pid_t p);
@@ -985,8 +983,8 @@ drawstatusbar(Monitor *m, int bh, char* stext) {
 	x = m->ww - w - getsystraywidth();
 
 	drw_setscheme(drw, scheme[LENGTH(colors)]);
-	drw->scheme[ColFg] = scheme[SchemeNorm][ColFg];
-	drw->scheme[ColBg] = scheme[SchemeNorm][ColBg];
+	drw->scheme[ColFg] = scheme[SchemeSel][ColFg];
+	drw->scheme[ColBg] = scheme[SchemeSel][ColBg];
 	drw_rect(drw, x, 0, w, bh, 1, 1);
 	x++;
 
@@ -1017,8 +1015,8 @@ drawstatusbar(Monitor *m, int bh, char* stext) {
 					drw_clr_create(drw, &drw->scheme[ColBg], buf);
 					i += 7;
 				} else if (text[i] == 'd') {
-					drw->scheme[ColFg] = scheme[SchemeNorm][ColFg];
-					drw->scheme[ColBg] = scheme[SchemeNorm][ColBg];
+					drw->scheme[ColFg] = scheme[SchemeSel][ColFg];
+					drw->scheme[ColBg] = scheme[SchemeSel][ColBg];
 				} else if (text[i] == 'r') {
 					int rx = atoi(text + ++i);
 					while (text[++i] != ',');
@@ -1055,8 +1053,6 @@ void
 drawbar(Monitor *m)
 {
 	int x, w, tw = 0, stw = 0;
-	int boxs = drw->fonts->h / 9;
-	int boxw = drw->fonts->h / 6 + 2;
 	unsigned int i, occ = 0, urg = 0;
 	Client *c;
 
@@ -1087,16 +1083,16 @@ drawbar(Monitor *m)
 		drw_text(drw, x, 0, w, bh, lrpad / 2, tags[i], urg & 1 << i);
 		x += w;
 	}
-	w = TEXTW(m->ltsymbol);
-	drw_setscheme(drw, scheme[SchemeNorm]);
-	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
+	if (m->ltsymbol[0] != '\0') {
+    	w = TEXTW(m->ltsymbol);
+    	drw_setscheme(drw, scheme[SchemeNorm]);
+    	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
+    }
 
 	if ((w = m->ww - tw - stw - x) > bh) {
 		if (m->sel) {
 			drw_setscheme(drw, scheme[m == selmon ? SchemeSel : SchemeNorm]);
 			drw_text(drw, x, 0, w, bh, lrpad / 2, m->sel->name, 0);
-			if (m->sel->isfloating)
-				drw_rect(drw, x + boxs, boxs, boxw, boxw, m->sel->isfixed, 0);
 		} else {
 			drw_setscheme(drw, scheme[SchemeNorm]);
 			drw_rect(drw, x, 0, w, bh, 1, 1);
@@ -1662,7 +1658,7 @@ placemouse(const Arg *arg)
 			handler[ev.type](&ev);
 			break;
 		case MotionNotify:
-			if ((ev.xmotion.time - lasttime) <= (1000 / 60))
+			if ((ev.xmotion.time - lasttime) <= (1000 / refreshrate))
 				continue;
 			lasttime = ev.xmotion.time;
 
@@ -1749,15 +1745,6 @@ placemouse(const Arg *arg)
 	if (nx != -9999)
 		resize(c, nx, ny, c->w, c->h, 0);
 	arrangemon(c->mon);
-}
-
-void
-pop(Client *c)
-{
-	detach(c);
-	attach(c);
-	focus(c);
-	arrange(c->mon);
 }
 
 void
@@ -2244,7 +2231,7 @@ setup(void)
 	wmatom[WMState] = XInternAtom(dpy, "WM_STATE", False);
 	wmatom[WMTakeFocus] = XInternAtom(dpy, "WM_TAKE_FOCUS", False);
 	netatom[NetActiveWindow] = XInternAtom(dpy, "_NET_ACTIVE_WINDOW", False);
-   netatom[NetSupported] = XInternAtom(dpy, "_NET_SUPPORTED", False);
+    netatom[NetSupported] = XInternAtom(dpy, "_NET_SUPPORTED", False);
 	netatom[NetSystemTray] = XInternAtom(dpy, "_NET_SYSTEM_TRAY_S0", False);
 	netatom[NetSystemTrayOP] = XInternAtom(dpy, "_NET_SYSTEM_TRAY_OPCODE", False);
 	netatom[NetSystemTrayOrientation] = XInternAtom(dpy, "_NET_SYSTEM_TRAY_ORIENTATION", False);
@@ -2344,8 +2331,6 @@ spawn(const Arg *arg)
 {
 	struct sigaction sa;
 
-	if (arg->v == dmenucmd)
-		dmenumon[0] = '0' + selmon->num;
 	if (fork() == 0) {
 		if (dpy)
 			close(ConnectionNumber(dpy));
@@ -2418,7 +2403,7 @@ tile(Monitor *m)
 void
 togglebar(const Arg *arg)
 {
-	selmon->showbar = selmon->pertag->showbars[selmon->pertag->curtag] = !selmon->showbar;
+	selmon->showbar = !selmon->showbar;
 	updatebarpos(selmon);
 	resizebarwin(selmon);
 	if (showsystray) {
@@ -2498,9 +2483,6 @@ toggleview(const Arg *arg)
 		selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 		selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 		selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
-
-		if (selmon->showbar != selmon->pertag->showbars[selmon->pertag->curtag])
-			togglebar(NULL);
 
 		focus(NULL);
 		arrange(selmon);
@@ -2790,28 +2772,15 @@ updatestatus(void)
 	updatesystray();
 }
 
-
 void
 updatesystrayicongeom(Client *i, int w, int h)
 {
 	if (i) {
-		i->h = bh;
-		if (w == h)
-			i->w = bh;
-		else if (h == bh)
-			i->w = w;
-		else
-			i->w = (int) ((float)bh * ((float)w / (float)h));
-		applysizehints(i, &(i->x), &(i->y), &(i->w), &(i->h), False);
-		/* force icons into the systray dimensions if they don't want to */
-		if (i->h > bh) {
-			if (i->w == i->h)
-				i->w = bh;
-			else
-				i->w = (int) ((float)bh * ((float)i->w / (float)i->h));
-			i->h = bh;
-		}
-	}
+        i->w = w = 16; // Set icon width to 16
+        i->h = h = 16; // Set icon height to 16
+		i->y = ((bh - h) / 2); // Calculate y to center icon vertically
+        XMoveResizeWindow(dpy, i->win, i->x, i->y, i->w, i->h);
+    }
 }
 
 void
@@ -2852,6 +2821,7 @@ updatesystray(void)
 	unsigned int x = m->mx + m->mw;
 	unsigned int sw = TEXTW(stext) - lrpad + systrayspacing;
 	unsigned int w = 1;
+	unsigned int y = ((bh - 16) / 2);
 
 	if (!showsystray)
 		return;
@@ -2889,7 +2859,8 @@ updatesystray(void)
 		XMapRaised(dpy, i->win);
 		w += systrayspacing;
 		i->x = w;
-		XMoveResizeWindow(dpy, i->win, i->x, 0, i->w, i->h);
+		i->y = y;
+		XMoveResizeWindow(dpy, i->win, i->x, i->y, i->w, i->h);
 		w += i->w;
 		if (i->mon != m)
 			i->mon = m;
@@ -2978,9 +2949,6 @@ view(const Arg *arg)
 	selmon->sellt = selmon->pertag->sellts[selmon->pertag->curtag];
 	selmon->lt[selmon->sellt] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt];
 	selmon->lt[selmon->sellt^1] = selmon->pertag->ltidxs[selmon->pertag->curtag][selmon->sellt^1];
-
-	if (selmon->showbar != selmon->pertag->showbars[selmon->pertag->curtag])
-		togglebar(NULL);
 
 	focus(selmon->pertag->sel[selmon->pertag->curtag]);
 	arrange(selmon);
@@ -3206,18 +3174,6 @@ systraytomon(Monitor *m) {
 	if(systraypinningfailfirst && n < systraypinning)
 		return mons;
 	return t;
-}
-
-void
-zoom(const Arg *arg)
-{
-	Client *c = selmon->sel;
-
-	if (!selmon->lt[selmon->sellt]->arrange || !c || c->isfloating)
-		return;
-	if (c == nexttiled(selmon->clients) && !(c = nexttiled(c->next)))
-		return;
-	pop(c);
 }
 
 int
