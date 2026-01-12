@@ -1,0 +1,24 @@
+[general]
+import = [
+    "keybinds.toml",
+    "nord.toml"
+]
+
+[window]
+dimensions = { columns = 120, lines = 30 }
+padding = { x = 10, y = 10 }
+opacity = 0.9
+dynamic_title = false
+
+[font]
+normal = { family = "MesloLGS Nerd Font Mono", style = "Regular" }
+bold = { family = "MesloLGS Nerd Font Mono", style = "Bold" }
+italic = { family = "MesloLGS Nerd Font Mono", style = "Italic" }
+bold_italic = { family = "MesloLGS Nerd Font Mono", style = "Bold Italic" }
+size = 16
+
+[colors]
+draw_bold_text_with_bright_colors = true
+
+[cursor]
+style = { shape = "Beam", blinking = "Never" }
