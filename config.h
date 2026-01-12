@@ -10,7 +10,7 @@ static const int topbar                  = 1;         /* 0 means bottom bar */
 static const int usealtbar               = 1;         /* 1 means use non-dwm status bar */
 static const char *altbarclass           = "Polybar"; /* Alternate bar class name */
 static const char *alttrayname           = "tray";    /* Polybar tray instance name */
-static const char *altbarcmd             = "polybar&"; 
+static const char *altbarcmd             = "$HOME/.config/polybar/launch.sh"; 
 static const char *fonts[]               = { "MesloLGS Nerd Font Mono:size=16", "NotoColorEmoji:pixelsize=16" };
 static const char nord0[]                = "#2e3440";
 static const char nord1[]                = "#3b4252";
