@@ -1,0 +1,74 @@
+* {
+    font: "MesloLGS Nerd Font Mono 12";
+    background-color:   #1e222a;
+    text-color:         #d8dee9;
+    bg-selected:        #434c5e;
+    error-color:        #bf616a;
+    prompt-color:       #88c0d0;
+    placeholder-color:  #4c566a;
+}
+
+window {
+    width: 40%;
+    height: 100%;
+    location: west;
+    anchor: west;
+}
+
+error-message {
+    padding: 1em;
+    text-color: @error-color;
+}
+
+textbox {
+    text-color: inherit;
+    background-color: inherit;
+}
+
+inputbar {
+    children: [ prompt, entry ];
+    padding: 8px 4px;
+}
+
+mainbox {
+    margin: 5px;
+}
+
+listview {
+    margin: 5px;
+}
+
+element {
+    padding: 5px;
+    border-radius: 2px;
+}
+
+element selected {
+    background-color: @bg-selected;
+}
+
+element-text {
+    background-color: inherit;
+    vertical-align: 0.5;
+}
+
+element-icon {
+    background-color: inherit;
+    size: 25px;
+    margin: 0 8px 0 0;
+}
+
+entry {
+    font: "MesloLGS Nerd Font Mono 18";
+    vertical-align: 0.5;
+    placeholder: "Search...";
+    margin: 0 0 0 6px;
+}
+
+prompt {
+    padding: 0 2px;
+    margin: 0 5px;
+    font: "MesloLGS Nerd Font Mono 24";
+    text-color: @prompt-color;
+    vertical-align: 0.5;
+}
