@@ -62,7 +62,7 @@ entry {
     font: "MesloLGS Nerd Font Mono 18";
     vertical-align: 0.5;
     placeholder: "Search...";
-    margin: 0 0 0 6px;
+    margin: 0 0 0 5px;
 }
 
 prompt {
