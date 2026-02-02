@@ -1,0 +1,141 @@
+#!/bin/bash
+
+APPS_DIR="$HOME/.local/share/applications"
+ICONS_DIR="$HOME/.local/share/icons"
+
+create_webapp() {
+    local name="$1"
+    local url="$2"
+    local icon_url="$3"
+    local browser_bin="$4"
+
+    if [[ -z "$name" || -z "$url" || -z "$icon_url" || -z "$browser_bin" ]]; then
+        echo "Usage: webapp create <name> <url> <icon_url> <browser_bin>"
+        return 1
+    fi
+
+    if [[ "$browser_bin" = "firefox" ]]; then
+        echo "Firefox is not supported. Please use a chromium-based browser."
+        return 1
+    fi
+
+    if command -v "$browser_bin" >/dev/null 2>&1; then
+        echo "Using browser: $browser_bin"
+    else
+        echo "Browser binary '$browser_bin' not found."
+        return 1
+    fi
+
+    mkdir -p "$APPS_DIR" "$ICONS_DIR"
+
+    local clean_name=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | sed 's/[^a-z0-9-]//g')
+    local desktop_file="$APPS_DIR/${clean_name}.desktop"
+    local icon_path="$ICONS_DIR/${clean_name}.png"
+
+    echo "Downloading icon..."
+    if command -v curl >/dev/null 2>&1; then
+        curl -sSL "$icon_url" -o "$icon_path"
+    elif command -v wget >/dev/null 2>&1; then
+        wget -q "$icon_url" -O "$icon_path"
+    else
+        echo "Neither curl nor wget is available to download the icon."
+        return 1
+    fi
+
+    cat > "$desktop_file" <<EOL
+[Desktop Entry]
+Name=$name
+Exec=$browser_bin --app=$url
+Icon=$icon_path
+Type=Application
+Categories=Network;WebBrowser;
+StartupWMClass=$clean_name
+Comment=Web Application for $name
+EOL
+
+    echo "Web application '$name' created successfully."
+}
+
+remove_webapp() {
+    local name="$1"
+
+    if [[ -z "$name" ]]; then
+        echo "Usage: webapp remove <name>"
+        return 1
+    fi
+
+    local clean_name=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | sed 's/[^a-z0-9-]//g')
+    local desktop_file="$APPS_DIR/${clean_name}.desktop"
+    local icon_path="$ICONS_DIR/${clean_name}.png"
+
+    if [[ -f "$desktop_file" ]]; then
+        rm "$desktop_file"
+        echo "Desktop entry for '$name' removed."
+    else
+        echo "Desktop entry for '$name' not found."
+    fi
+
+    if [[ -f "$icon_path" ]]; then
+        rm "$icon_path"
+        echo "Icon for '$name' removed."
+    else
+        echo "Icon for '$name' not found."
+    fi
+}
+
+launch_webapp() {
+    local name="$1"
+
+    if [[ -z "$name" ]]; then
+        echo "Usage: webapp launch <name>"
+        return 1
+    fi
+
+    local clean_name=$(echo "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-' | sed 's/[^a-z0-9-]//g')
+    local desktop_file="$APPS_DIR/${clean_name}.desktop"
+
+    if [[ -f "$desktop_file" ]]; then
+        webapp_cmd=$(grep '^Exec=' "$desktop_file" | sed 's/^Exec=//')
+        $webapp_cmd &
+    else
+        echo "Web application '$name' not found."
+    fi
+}
+
+list_webapps() {
+    echo "Installed Web Applications:"
+    for file in "$APPS_DIR"/*.desktop; do
+        [[ -e "$file" ]] || continue
+        grep -H '^Name=' "$file" | sed 's/.*Name=//'
+    done
+}
+
+case "$1" in
+    create)
+        shift
+        create_webapp "$@"
+        ;;
+    remove)
+        shift
+        remove_webapp "$@"
+        ;;
+    launch)
+        shift
+        launch_webapp "$@"
+        ;;
+    list)
+        list_webapps
+        ;;
+    *)
+        echo "Web Application Manager"
+        echo "Usage: webapp {create|remove|launch|list} [arguments]"
+        echo "Commands:"
+        echo "  create <name> <url> <icon_url> <browser_bin>"
+        echo "  remove <name>"
+        echo "  launch <name>"
+        echo "  list"
+        echo "Examples:"
+        echo "  webapp create ChatGPT https://chatgpt.com https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/chatgpt.png google-chrome-stable"
+        echo "  webapp remove ChatGPT"
+        ;;
+esac

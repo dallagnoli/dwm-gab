@@ -25,11 +25,11 @@ static const char *colors[][3]           = {
 };
 
 static const char *const autostart[] = {
-	"sh", "-c", "xrandr --output DP-1 --mode 1920x1080 --rate 180", NULL,
-	"sh", "-c", "xset s off && xset s noblank && xset -dpms", NULL,
-	"sh", "-c", "feh --randomize --bg-fill ~/Pictures/backgrounds/*", NULL,
 	"dbus-update-activation-environment", "--systemd", "--all", NULL,
 	"/usr/lib/mate-polkit/polkit-mate-authentication-agent-1", NULL,
+	"sh", "-c", "feh --randomize --bg-fill ~/Pictures/backgrounds/*", NULL,
+	"resolution", NULL,
+	"powersaving", NULL,
 	"picom", "-b", NULL,
 	"flameshot", NULL,
 	"dunst", NULL,
@@ -73,12 +73,16 @@ static const Layout layouts[] = {
 /* commands */
 static const char *launcher[] = { "rofi", "-show", "drun", NULL };
 static const char *terminal[] = { "alacritty", NULL };
+static const char *chatgpt[]  = { "webapp", "launch", "ChatGPT", NULL };
+static const char *gemini[]   = { "webapp", "launch", "Gemini", NULL };
 
 #include "movestack.c"
 static const Key keys[] = {
 	/* modifier                     key            function          argument */
 	{ MODKEY,                       XK_r,          spawn,            {.v = launcher } },
 	{ MODKEY,                       XK_x,          spawn,            {.v = terminal } },
+	{ MODKEY,                       XK_a,          spawn,            {.v = chatgpt } },
+	{ MODKEY|ShiftMask,             XK_a,          spawn,            {.v = gemini } },
 	{ MODKEY|ShiftMask,             XK_w,          spawn,            SHCMD ("feh --randomize --bg-fill ~/Pictures/backgrounds/*") },
 	{ MODKEY,                       XK_p,          spawn,            SHCMD ("flameshot full -p ~/Pictures/screenshots") },
 	{ MODKEY|ShiftMask,             XK_p,          spawn,            SHCMD ("flameshot gui -p ~/Pictures/screenshots") },
@@ -86,7 +90,7 @@ static const Key keys[] = {
 	{ MODKEY,                       XK_equal,      spawn,            SHCMD ("amixer sset Master 5%+ unmute") },
 	{ MODKEY,                       XK_minus,      spawn,            SHCMD ("amixer sset Master 5%- unmute") },
 	{ MODKEY,                       XK_m,          spawn,            SHCMD ("amixer sset Master $(amixer get Master | grep -q '\\[on\\]' && echo 'mute' || echo 'unmute')") },
-	{ MODKEY|ControlMask,           XK_m,          spawn,            SHCMD ("sink='alsa_output.pci-0000_00_1f.3.analog-stereo'; port=$(pactl list sinks | awk -v s=\"$sink\" '$0~\"Name: \"s{f=1}f&&/Active Port:/{print $3;exit}'); if [ \"$port\" = \"analog-output-headphones\" ]; then pactl set-sink-port \"$sink\" analog-output-lineout; else pactl set-sink-port \"$sink\" analog-output-headphones; fi") },
+	{ MODKEY|ControlMask,           XK_m,          spawn,            SHCMD ("audio-toggle") },
 	{ MODKEY|ControlMask,           XK_i,          spawn,            SHCMD ("pgrep -x 'picom' > /dev/null && killall picom || picom -b") },
 	{ MODKEY|ControlMask|ShiftMask, XK_r,          spawn,            SHCMD ("systemctl reboot") },
 	{ MODKEY|ControlMask|ShiftMask, XK_s,          spawn,            SHCMD ("systemctl poweroff") },
@@ -123,7 +127,7 @@ static const Key keys[] = {
 	TAGKEYS(                        XK_7,                            6)
 	TAGKEYS(                        XK_8,                            7)
 	TAGKEYS(                        XK_9,                            8)
-	{ MODKEY|ShiftMask,             XK_q,          quit,             {0} },
+	{ MODKEY|ControlMask|ShiftMask, XK_q,          quit,             {0} },
 };
 
 /* button definitions */
