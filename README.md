@@ -36,13 +36,13 @@ cp -r ~/.local/share/dwm-gab/config/* ~/.config
 ### Clone Backgrounds
 
 ```
-cd ~/Pictures
-git clone https://github.com/dallagnoli/backgrounds
+git clone https://github.com/dallagnoli/backgrounds ~/Pictures/backgrounds
 ```
 
 ### Enable Display Manager
 
 ```
+sudo mkdir -p /usr/share/xsessions
 sudo cp ~/.local/share/dwm-gab/dwm.desktop /usr/share/xsessions
 sudo systemctl enable sddm
 ```
