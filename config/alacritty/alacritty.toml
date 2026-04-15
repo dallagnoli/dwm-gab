@@ -7,7 +7,7 @@ import = [
 [window]
 dimensions = { columns = 120, lines = 30 }
 padding = { x = 10, y = 10 }
-opacity = 0.9
+opacity = 0.95
 
 [font]
 normal = { family = "MesloLGS Nerd Font Mono", style = "Regular" }

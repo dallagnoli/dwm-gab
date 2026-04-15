@@ -136,6 +136,9 @@ case "$1" in
         echo "  list"
         echo "Examples:"
         echo "  webapp create ChatGPT https://chatgpt.com https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/chatgpt.png google-chrome-stable"
-        echo "  webapp remove ChatGPT"
+        echo "  webapp create Gemini https://gemini.google.com https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/google-gemini.png google-chrome-stable"
+        echo "  webapp create Claude https://claude.ai https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/claude-ai.png google-chrome-stable"
+        echo "  webapp create 'YT Music' https://music.youtube.com https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/youtube-music.png google-chrome-stable"
+        echo "  webapp create Bitwarden https://vault.bitwarden.com/#/vault https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/bitwarden.png google-chrome-stable"
         ;;
 esac

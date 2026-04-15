@@ -9,7 +9,7 @@
 }
 
 window {
-    width: 40%;
+    width: 30em;
     height: 100%;
     location: west;
     anchor: west;
