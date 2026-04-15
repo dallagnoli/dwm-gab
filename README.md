@@ -1,4 +1,4 @@
-# dwm-gab
+# dwm
 
 Custom dwm build.
 
