@@ -1,7 +1,7 @@
 #!/bin/sh -e
 
 sudo pacman -S --noconfirm --needed \
-  base-devel git xorg-server xorg-xrandr xorg-xset \
+  base-devel git rsync xorg-server xorg-xrandr xorg-xset \
   noto-fonts noto-fonts-emoji ttf-meslo-nerd \
   papirus-icon-theme \
   pipewire pipewire-alsa pipewire-pulse pipewire-jack wireplumber \
@@ -22,4 +22,4 @@ sudo make clean install
 sudo mkdir -p /usr/share/xsessions
 [ -f dwm.desktop ] && sudo cp dwm.desktop /usr/share/xsessions
 
-sudo systemctl enable sddm
+sudo systemctl enable --now sddm
